@@ -4,15 +4,20 @@ import json
 
 app = Flask(__name__)
 
+
 @app.route('/')
 def index():
+    # отправка формы для заполнения
     return render_template('html_content.html')
+
 
 @app.route('/submit', methods=['POST'])
 def submit():
+    # Обработка входных данных
     data = request.get_json()
     forecast_result = transport_forecast(data)
     return jsonify(forecast_result)
+
 
 @app.route('/result', methods=['GET'])
 def result():
@@ -32,6 +37,7 @@ def result():
         return "Ошибка: некорректный формат JSON", 400
 
     return render_template('html_result.html', result=result, input_data=input_data)
+
 
 if __name__ == '__main__':
     app.run(port=5000, host='127.0.0.1')
