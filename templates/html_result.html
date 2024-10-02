@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результаты прогноза нагрузки</title>
+    <style>
+        body {
+            font-family: monospace;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://sun9-13.userapi.com/impg/s1ErowN7P1MuNOpJ5opmc2M93x515kfBM2ddlA/tFNu05I1PAM.jpg?quality=95&as=1280x1600&sign=821594db8ec4d487b46848f14742c0b3&from=bu&u=qbs2pwJQVbF1Vo9it8DbPLA8qcFW-70kuZdmik7Ooi4&cs=646x807');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            color: white;
+        }
+        header {
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-size: 3em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            position: relative;
+            z-index: 2;
+        }
+        .result-container {
+            width: 80%;
+            margin: 30px auto;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            color: #333;
+        }
+        .result-container h2 {
+            text-align: center;
+            color: #1E90FF;
+        }
+        .result-container p {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Результаты прогноза нагрузки на дороги и метро</h1>
+    </header>
+    <div class="result-container">
+        <h2>Введенные данные:</h2>
+        <p><strong>Класс жилья:</strong> {{ input_data.housingClass }}</p>
+        <p><strong>Площадь жилой застройки (м²):</strong> {{ input_data.residentialArea }}</p>
+        <p><strong>Площадь офисной застройки (м²):</strong> {{ input_data.officeArea }}</p>
+        <h2>Результаты прогноза:</h2>
+        <h3>Станции метро:</h3>
+        <ul>
+            {% for station in result.stations %}
+                <li>
+                    <strong>Станция:</strong> {{ station.stationName }}<br>
+                    <strong>Новый пассажиропоток утром:</strong> {{ station.increaseMorningPick }}<br>
+                    <strong>Резерв пропускной способности:</strong> {{ station.bandwidthReserve }}
+                </li>
+            {% endfor %}
+        </ul>
+        <h3>Дороги:</h3>
+        <ul>
+            {% for road in result.roads %}
+                <li>
+                    <strong>Дорога:</strong> {{ road.roadName }}<br>
+                    <strong>Новая интенсивность утром:</strong> {{ road.increaseMorningPick }}<br>
+                    <strong>Резерв пропускной способности:</strong> {{ road.bandwidthReserve }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <footer>
+        Выполнено командой "Мышиное обучение" для Nuclear IT Хакатон
+    </footer>
+</body>
+</html>

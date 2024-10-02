@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прогноз нагрузки на дороги и метро</title>
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+    <style>
+        /* Общие стили для всего сайта */
+        body {
+            font-family: monospace;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://sun9-13.userapi.com/impg/s1ErowN7P1MuNOpJ5opmc2M93x515kfBM2ddlA/tFNu05I1PAM.jpg?quality=95&as=1280x1600&sign=821594db8ec4d487b46848f14742c0b3&from=bu&u=qbs2pwJQVbF1Vo9it8DbPLA8qcFW-70kuZdmik7Ooi4&cs=646x807');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            color: white;
+        }
+
+        /* Стили для шапки без изображения */
+        header {
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 3em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Градиентный переход между шапкой и фоном */
+        header:after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0.8) 100%);
+            z-index: 1;
+        }
+
+        /* Стили для контейнера карты */
+        .map-container {
+            width: 80%;
+            height: 500px;
+            margin: 30px auto;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Стили для текстов */
+        .info-text {
+            text-align: center;
+            font-size: 1.5em;
+            margin: 20px 0;
+            color: #42AAFF;
+            transition: color 0.3s ease;
+        }
+
+        .info-text:hover {
+            color: #66AAFF;
+        }
+
+        /* Стили для таблицы */
+        table {
+            width: 80%;
+            margin: 30px auto;
+            border-collapse: collapse;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        table:hover {
+            transform: translateY(-5px);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            font-size: 1.2em;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            color: white;
+        }
+
+        th {
+            background: linear-gradient(to right, #1E90FF, #00BFFF);
+            color: white;
+            font-weight: bold;
+        }
+
+        td {
+            background-color: rgba(173, 216, 230, 0.1);
+        }
+
+        /* Стили для подзаголовка */
+        h2 {
+            font-size: 2em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        h3 {
+            font-family: Tahoma;
+            font-size: 1.2em;
+            color: white;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            text-align: left;
+        }
+
+        /* Стили для формы ввода */
+        .input-table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: rgba(173, 216, 230, 0);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Градиентный текст */
+        .gradient-text {
+            background: linear-gradient(to right, #1E90FF, #00BFFF);
+            -webkit-background-clip: text;
+            color: transparent;
+            font-weight: bold;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 1em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+        input[type="text"], select {
+            width: 100%; /* Ширина 100% */
+            padding: 10px; /* Внутренние отступы */
+            border: none; /* Без границ */
+            border-radius: 5px; /* Скругление углов */
+            margin-top: 10px; /* Отступ сверху */
+            font-size: 1em; /* Размер шрифта */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Тень */
+            color: #333; /* Цвет текста */
+        }
+
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 5px #1E90FF;
+        }
+
+        /* Стили для футера */
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            margin-top: 40px;
+        }
+
+        /* Стили для кнопки */
+        .button-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            background-color: #1E90FF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #00BFFF;
+        }
+
+        /* Стили для правого бокового табло */
+        .side-panel {
+            position: fixed;
+            right: -500px; /* Изначально табло скрыто за экраном */
+            top: 0; /* Табло начинается с верхнего угла */
+            width: 250px;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 0 0 8px 8px;
+            transition: right 0.3s ease;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        .side-panel.open {
+            right: 0; /* Табло выезжает при открытии */
+        }
+
+        .side-panel h3 {
+            text-align: center;
+        }
+
+        .side-panel input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            color: #333;
+        }
+
+        .side-panel input:focus {
+            outline: none;
+            box-shadow: 0 0 5px #1E90FF;
+        }
+
+        .close-panel {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .close-panel button {
+            background-color: red;
+            color: white;
+            padding: 5px 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .close-panel button:hover {
+            background-color: darkred;
+        }
+
+        /* Стиль для триггера панели (три горизонтальные палочки) */
+        .menu-trigger {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            z-index: 1001; /* Выше боковой панели */
+            transition: opacity 0.3s ease;
+        }
+
+        .menu-trigger div {
+            width: 35px;
+            height: 5px;
+            background-color: white;
+            margin: 6px 0;
+            transition: transform 0.3s ease;
+        }
+
+        .menu-trigger.open div:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .menu-trigger.open div:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-trigger.open div:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        /* Стили для дополнительного блока */
+        .additional-input-block {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .remove-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .remove-button:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Прогноз нагрузки на дороги и метро</h1>
+    </header>
+
+    <h2>Карта для удобства ввода данных</h2>
+
+    <div class="map-container">
+    <div id="map" style="width: 100%; height: 500px;"></div>
+    <script type="text/javascript">
+        ymaps.ready(init);
+        function init() {
+            var myMap = new ymaps.Map("map", {
+                center: [55.751442, 37.615569],
+                zoom: 15
+            });
+
+            var myPlacemark = new ymaps.Placemark([55.751442, 37.615569], {
+                hintContent: 'Кремлевский дворец',
+                balloonContent: 'Кремлевский дворец'
+            });
+
+            myMap.geoObjects.add(myPlacemark);
+        }
+    </script>
+    </div>
+
+    <h2 class="info-text gradient-text">Введите данные для прогнозирования</h2>
+
+    <form id="data-form">
+        <table class="input-table">
+            <tr>
+                <td><h3>Класс жилья</h3>
+                    <select id="housing-class" name="housing-class">
+                        <option value="low">Бюджетный</option>
+                        <option value="medium">Средний</option>
+                        <option value="high">Элитный</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><h3>Жилая площадь (м²)</h3>
+                    <input type="number" id="residential-area" name="residential-area" placeholder="Введите жилую площадь" required>
+                </td>
+            </tr>
+            <tr>
+                <td><h3>Офисная площадь (м²)</h3>
+                    <input type="number" id="office-area" name="office-area" placeholder="Введите офисную площадь" required>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <button type="button" onclick="addStationBlock()">+</button> <!-- Кнопка для добавления блока -->
+                </td>
+            </tr>
+            <tr>
+                <td id="additional-station-inputs">
+                    <!-- Здесь будут динамически добавляться блоки для станции метро -->
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <button type="button" onclick="addroadBlock()">+</button> <!-- Кнопка для добавления блока -->
+                </td>
+            </tr>
+            <tr>
+                <td id="additional-road-inputs">
+                    <!-- Здесь будут динамически добавляться блоки для дороги -->
+                </td>
+            </tr>
+
+        </table>
+
+        <div class="button-container">
+            <button type="button" onclick="submitForm()">Отправить данные</button>
+        </div>
+    </form>
+
+    <footer>
+        <p>&copy; Выполнено командой "Мышиное обучение" для Nuclear IT Хакатон </p>
+    </footer>
+
+        <div class="side-panel" id="side-panel">
+        <h3>Дополнительные параметры</h3>
+        <label for="working-population">Доля трудоспособного населения (%):</label>
+        <input type="number" id="working-population" name="working-population" placeholder="57%">
+        <label for="ot-it-ratio">Отношение ОТ/ИТ:</label>
+        <input type="number" id="ot-it-ratio" name="ot-it-ratio" placeholder="70/30">
+        <label for="car-occupancy">Коэффициент заполняемости автомобиля:</label>
+        <input type="number" id="car-occupancy" name="car-occupancy" placeholder="1.2">
+        <label for="peak-load-live">Нагрузка на утренний час пик от жилой застройки:</label>
+        <input type="number" id="peak-load-live" name="peak-load-live" placeholder="10%">
+        <label for="peak-load-office">Нагрузка на утренний час пик от офисной застройки:</label>
+        <input type="number" id="peak-load-office" name="peak-load-office" placeholder="35%">
+        <div class="close-panel">
+            <button onclick="togglePanel()">Закрыть</button>
+        </div>
+    </div>
+
+    <div class="menu-trigger" id="menu-trigger" onclick="togglePanel()">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+
+    <script>
+        function addStationBlock() {
+            const block = document.createElement('div');
+            block.className = 'additional-input-block';
+            block.innerHTML = `
+                <h3>Станция метро</h3>
+                <input type="text" name="station-name[]" placeholder="Введите название станции метро" required>
+                <h3>Пассажиропоток утром</h3>
+                <input type="text" name="passenger-flow-morning[]" placeholder="Введите пассажиропоток утром (тыс. чел/час)" required oninput="validateFloatInput(this)">
+                <h3>Пассажиропоток вечером</h3>
+                <input type="text" name="passenger-flow-evening[]" placeholder="Введите пассажиропоток вечером (тыс. чел/час)" required oninput="validateFloatInput(this)">
+                <h3>Пропускная способность станции </h3>
+                <input type="text" name="station-capacity[]" placeholder="Введите пропускную способность станции (тыс. чел)" required oninput="validateFloatInput(this)">
+                <button class="remove-button" onclick="removeStationBlock(this)">-</button>
+            `;
+            document.getElementById('additional-station-inputs').appendChild(block);
+        }
+
+        function removeStationBlock(button) {
+            const block = button.parentElement;
+            block.parentElement.removeChild(block);
+        }
+
+        function addroadBlock() {
+            const block = document.createElement('div');
+            block.className = 'additional-input-block2';
+            block.innerHTML = `
+                <h3>Название дороги</h3>
+                <input type="text" name="road-name[]" placeholder="Введите название дороги" required>
+                <h3>Интенсивность движения</h3>
+                <input type="text" name="road-intensity[]" placeholder="Введите интенсивность движения (ТС/час)" required oninput="validateFloatInput(this)">
+                <h3>Соответсвующее интенсивности количество баллов </h3>
+                <input type="text" name="road-score[]" placeholder="Введите соответсвующее выбранной вами интенсивности количество баллов " required oninput="validateFloatInput(this)">
+                <button class="remove-button" onclick="removeroadBlock(this)">-</button>
+            `;
+            document.getElementById('additional-road-inputs').appendChild(block);
+        }
+
+        function removeroadBlock(button) {
+            const block = button.parentElement;
+            block.parentElement.removeChild(block);
+        }
+
+        function togglePanel() {
+            const panel = document.getElementById('side-panel');
+            const trigger = document.getElementById('menu-trigger');
+            panel.classList.toggle('open');
+            trigger.classList.toggle('open');
+        }
+
+        function validateFloatInput(input) {
+            let value = input.value;
+            if (value.includes(',')) {
+                value = value.replace(',', '.');
+            }
+            if (value.includes('.')) {
+                const parts = value.split('.');
+                if (parts[1] && parts[1].length > 1) {
+                    value = parts[0] + '.' + parts[1].slice(0, 1);
+                }
+            }
+            input.value = value;
+        }
+
+        async function submitForm() {
+    const form = document.getElementById('data-form');
+    const formData = new FormData(form);
+
+    // Собрать данные о станциях метро
+    const stationData = [];
+    const stationBlocks = document.querySelectorAll('.additional-input-block');
+    stationBlocks.forEach(block => {
+        const stationName = block.querySelector('input[name="station-name[]"]').value;
+        const passengerFlowMorning = parseFloat(block.querySelector('input[name="passenger-flow-morning[]"]').value);
+        const passengerFlowEvening = parseFloat(block.querySelector('input[name="passenger-flow-evening[]"]').value);
+        const stationCapacity = parseFloat(block.querySelector('input[name="station-capacity[]"]').value);
+
+        stationData.push({
+            stationName,
+            passengerFlowMorning,
+            passengerFlowEvening,
+            stationCapacity
+        });
+    });
+
+    // Собрать данные о дорогах
+    const roadData = [];
+    const roadBlocks = document.querySelectorAll('.additional-input-block2');
+    roadBlocks.forEach(block => {
+        const roadName = block.querySelector('input[name="road-name[]"]').value;
+        const roadIntensity = parseFloat(block.querySelector('input[name="road-intensity[]"]').value);
+        const roadScore = parseFloat(block.querySelector('input[name="road-score[]"]').value);
+
+        roadData.push({
+            roadName,
+            roadIntensity,
+            roadScore
+        });
+    });
+
+    // Собрать основные данные
+    const housingClass = document.getElementById('housing-class').value;
+    const residentialArea = document.getElementById('residential-area').value;
+    const officeArea = document.getElementById('office-area').value;
+
+    // Значения по умолчанию для боковой панели
+    const workingPopulation = parseFloat(document.getElementById('working-population').value) || 57; // Значение по умолчанию: 57%
+    const otItRatio = parseFloat(document.getElementById('ot-it-ratio').value) || 70; // Значение по умолчанию: 70/30
+    const carOccupancy = parseFloat(document.getElementById('car-occupancy').value) || 1.2; // Значение по умолчанию: 1.2
+    const peakLoadLive = parseFloat(document.getElementById('peak-load-live').value) || 10; // Значение по умолчанию: 10%
+    const peakLoadOffice = parseFloat(document.getElementById('peak-load-office').value) || 35; // Значение по умолчанию: 35%
+
+    // Сформировать JSON
+    const data = {
+        housingClass,
+        residentialArea,
+        officeArea,
+        workingPopulation,
+        otItRatio,
+        carOccupancy,
+        peakLoadLive,
+        peakLoadOffice,
+        stations: stationData,
+        roads: roadData
+    };
+
+    // Отправить данные на сервер
+    try {
+        const response = await fetch('/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            const resultWindow = window.open(`/result?result=${encodeURIComponent(JSON.stringify(result))}&input_data=${encodeURIComponent(JSON.stringify(data))}`, '_blank');
+            resultWindow.focus();
+        } else {
+            alert('Ошибка при отправке данных');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при отправке данных');
+    }
+}
+    </script>
+</body>
+</html>
